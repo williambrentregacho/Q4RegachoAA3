@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pre-Order Form</title>
+  <style>
+    body {
+      font-family: Arial;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      width: 500px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 50px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    input, select {
+      width: 95%;
+      padding: 8px;
+      margin: 8px 0;
+    }
+
+    #terms {
+      width: 10%;
+    }
+
+    button {
+      padding: 10px;
+      width: 100%;
+      margin-top: 5px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .error {
+      color: red;
+      margin-bottom: 10px;
+      min-height: 18px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>Science Project Pre-Order</h2>
+  
+  <p><strong>OINK:</strong> - 
+    Olfactory Inhalation Kit is a portable herbal steam inhalation 
+    product made for relieving nasal congestion and helping users 
+    feel more comfortable. It uses pre-measured herbal packs with 
+    rice and natural herbs like oregano, ginger, and lemongrass. 
+    It is designed to be affordable, easy to use, and convenient 
+    for people who want a traditional tuob-inspired option. 
+    The kit is meant for supportive relief, not as a medical cure.
+</p>
+
+  
+  <div id="errorMsg" class="error"></div>
+
+  <form onsubmit="return handleOrder()">
+    
+    <label>Customer Name:</label>
+    <input type="text" id="customerName">
+
+    <label>Product Name:</label>
+    <select id="variant">
+      <option value="">Select</option>
+      <option value="250ML">OINK w/o packs (PHP 250)</option>
+      <option value="500ML">OINK w/ packs (PHP 350)</option>
+    </select>
+
+    <label>Quantity:</label>
+    <input type="number" id="quantity">
+
+    <label>Pickup Method:</label>
+    <select id="pickup">
+      <option value="">Select</option>
+      <option value="Delivery">Delivery</option>
+      <option value="Meetup">Meetup</option>
+    </select>
+
+    <label>Address (for delivery only):</label>
+    <input type="text" id="address">
+
+    <label>
+      <input type="checkbox" id="terms"> I accept terms
+    </label>
+    <br><br>
+
+    <button type="button" onclick="loadPreviousOrder()">Load Previous Order</button>
+    <button type="submit">Submit</button>
+
+  </form>
+</div>
+
+<script>
+
+  // COOKIE FUNCTIONS
+  function setCookie(name, value, maxAge) {
+    const d = new Date();
+    d.setTime(d.getTime() + (maxAge * 1000));
+    const expires = "expires=" + d.toUTCString();
+    document.cookie = name + "=" + value + ";" + expires + ";path=/";
+  }
+
+  function getCookie(name) {
+    name += "=";
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(';');
+    for(let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) == ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) == 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return "";
+  }
+
+  function deleteCookie(name) {
+    document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  }
+
+  // VALIDATION FUNCTION
+  function validateForm() {
+    const errors = [];
+    
+    const customerName = document.getElementById("customerName").value.trim();
+    const variant = document.getElementById("variant").value;
+    const quantity = document.getElementById("quantity").value;
+    const pickup = document.getElementById("pickup").value;
+    const address = document.getElementById("address").value.trim();
+    const terms = document.getElementById("terms").checked;
+    
+    // Check for empty fields
+    if (!customerName) errors.push("customer name");
+    if (!variant) errors.push("product");
+    if (!quantity) errors.push("quantity");
+    if (!pickup) errors.push("pickup method");
+    
+    // Quantity must be greater than 0
+    if (quantity && parseInt(quantity) <= 0) {
+      errors.push("quantity must be greater than 0");
+    }
+    
+    // Address required if Delivery is selected
+    if (pickup === "Delivery" && !address) {
+      errors.push("address (required for delivery)");
+    }
+    
+    // Terms checkbox must be checked
+    if (!terms) errors.push("terms must be accepted");
+    
+    return errors;
+  }
+
+  // MAIN SUBMIT HANDLER
+  function handleOrder() {
+    document.getElementById("errorMsg").innerHTML = "";
+    
+    // Validate form
+    const errors = validateForm();
+    
+    if (errors.length > 0) {
+      let errorMessage = "The following fields cannot be empty: " + errors.join(", ");
+      document.getElementById("errorMsg").innerHTML = errorMessage;
+      return false;
+    }
+    
+    // Get values
+    const customerName = document.getElementById("customerName").value.trim();
+    const variant = document.getElementById("variant").value;
+    const quantity = document.getElementById("quantity").value;
+    const pickup = document.getElementById("pickup").value;
+    const address = document.getElementById("address").value.trim();
+    
+    // Store Customer Name using cookies (expires in 30 days)
+    setCookie("customerName", customerName, 30 * 24 * 60 * 60);
+    
+    // Store Product, Quantity, Pickup Method, and Address using localStorage
+    const orderData = {
+      product: variant,
+      quantity: quantity,
+      pickup: pickup,
+      address: pickup === "Delivery" ? address : ""
+    };
+    localStorage.setItem("orderData", JSON.stringify(orderData));
+    
+    // Redirect to summary.html
+    window.location.href = "summary.html";
+    
+    return false;
+  }
+
+  // LOAD PREVIOUS ORDER
+  function loadPreviousOrder() {
+    document.getElementById("errorMsg").innerHTML = "";
+    
+    // Retrieve stored data
+    const savedCustomerName = getCookie("customerName");
+    const savedOrderData = localStorage.getItem("orderData");
+    
+    // If no data: Display error message
+    if (!savedCustomerName && !savedOrderData) {
+      document.getElementById("errorMsg").innerHTML = "No previous order data";
+      return;
+    }
+    
+    // Populate Customer Name from cookie
+    if (savedCustomerName) {
+      document.getElementById("customerName").value = savedCustomerName;
+    }
+    
+    // Populate other fields from localStorage
+    if (savedOrderData) {
+      const orderData = JSON.parse(savedOrderData);
+      document.getElementById("variant").value = orderData.product || "";
+      document.getElementById("quantity").value = orderData.quantity || "";
+      document.getElementById("pickup").value = orderData.pickup || "";
+      document.getElementById("address").value = orderData.address || "";
+    }
+  }
+
+</script>
+
+</body>
+</html>

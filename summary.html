@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Order Summary</title>
+  <style>
+    body {
+      font-family: Arial;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      width: 500px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 50px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .summary-item {
+      margin: 15px 0;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+    }
+
+    .summary-item label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    button {
+      padding: 10px;
+      width: 100%;
+      margin-top: 5px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .no-data {
+      color: red;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>Order Summary</h2>
+  
+  <div id="summaryContent">
+    <!-- Order details will be populated here -->
+  </div>
+
+  <button onclick="window.location.href='preorder.html'">Place New Order</button>
+</div>
+
+<script>
+  // Retrieve stored data
+  function getCookie(name) {
+    name += "=";
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(';');
+    for(let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) == ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) == 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return "";
+  }
+
+  // Display order summary
+  function displaySummary() {
+    const customerName = getCookie("customerName");
+    const orderDataStr = localStorage.getItem("orderData");
+    
+    const summaryContent = document.getElementById("summaryContent");
+    
+    // Check if there's any order data
+    if (!customerName && !orderDataStr) {
+      summaryContent.innerHTML = "<p class='no-data'>No order data found. Please place an order first.</p>";
+      return;
+    }
+    
+    let orderData = {};
+    if (orderDataStr) {
+      orderData = JSON.parse(orderDataStr);
+    }
+    
+    // Get product display name
+    let productDisplay = orderData.product || "N/A";
+    if (orderData.product === "250ML") {
+      productDisplay = "OINK 250 mL";
+    } else if (orderData.product === "500ML") {
+      productDisplay = "OINK 500 mL";
+    }
+    
+    // Calculate total price
+    let unitPrice = 0;
+    if (orderData.product === "250ML") {
+      unitPrice = 250;
+    } else if (orderData.product === "500ML") {
+      unitPrice = 350;
+    }
+    const totalPrice = unitPrice * (parseInt(orderData.quantity) || 0);
+    
+    // Build summary HTML
+    let summaryHTML = "";
+    summaryHTML += "<div class='summary-item'><label>Customer Name:</label>" + (customerName || "N/A") + "</div>";
+    summaryHTML += "<div class='summary-item'><label>Product:</label>" + productDisplay + "</div>";
+    summaryHTML += "<div class='summary-item'><label>Quantity:</label>" + (orderData.quantity || "N/A") + "</div>";
+    summaryHTML += "<div class='summary-item'><label>Pickup Method:</label>" + (orderData.pickup || "N/A") + "</div>";
+    
+    if (orderData.pickup === "Delivery") {
+      summaryHTML += "<div class='summary-item'><label>Address:</label>" + (orderData.address || "N/A") + "</div>";
+    }
+    
+    summaryHTML += "<div class='summary-item'><label>Total Price:</label>PHP " + totalPrice.toLocaleString() + "</div>";
+    
+    // Add thank you message
+    summaryHTML += "<p style='text-align:center; color:#4CAF50; margin-top:20px;'>Thank you for your order! We will contact you shortly for confirmation.</p>";
+    
+    summaryContent.innerHTML = summaryHTML;
+  }
+
+  // Run on page load
+  displaySummary();
+</script>
+
+</body>
+</html>
